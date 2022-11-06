@@ -67,41 +67,6 @@ void draw250_speedup(int r, int rot, float zoom, Vec2 mid, Vec2 size)
     ImGui::GetWindowDrawList()->AddLine({ mid.x + (nanglediff * zoom), mid.y }, { mid.x + (nanglediff * zoom), mid.y + size.y }, ImColor(1.0f, 1.0f, 1.0f, 1.0f), 8);
 }
 
-
-
-void AngleVectors(const Vec3 angles, Vec3* forward, Vec3* right, Vec3* up) {
-    float angle;
-    static float sr, sp, sy, cr, cp, cy, cpi = (M_PI * 2 / 360);
-
-    angle = angles[1] * cpi;
-    sy = sin(angle);
-    cy = cos(angle);
-    angle = angles[0] * cpi;
-    sp = sin(angle);
-    cp = cos(angle);
-    angle = angles[2] * cpi;
-    sr = sin(angle);
-    cr = cos(angle);
-
-    if (forward) {
-        forward->x = cp * cy;
-        forward->y = cp * sy;
-        forward->z = -sp;
-    }
-
-    if (right) {
-        right->x = (-1 * sr * sp * cy + -1 * cr * -sy);
-        right->y = (-1 * sr * sp * sy + -1 * cr * cy);
-        right->z = -1 * sr * cp;
-    }
-
-    if (up) {
-        up->x = (cr * sp * cy + -sr * -sy);
-        up->y = (cr * sp * sy + -sr * cy);
-        up->z = cr * cp;
-    }
-}
-
 struct fps_zone
 {
     int fps;
