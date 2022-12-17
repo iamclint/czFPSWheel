@@ -7,10 +7,7 @@ struct FPSWheelItem
     std::string caption;
     Vec4 color;
     float size; // The assumption is that all the fps starts at 125 and ends at 333 in a 90 degree section so all we need to have is the size of each one
-    FPSWheelItem()
-    {
-
-    }
+	FPSWheelItem() : caption(""), color(0, 0, 0, 0), size(0) {}
     FPSWheelItem(std::string sCaption, Vec4 cColor, float fSize)
     {
         caption = sCaption;
@@ -53,20 +50,6 @@ enum fps_rot_ : char
 };
 
 
-void draw250_speedup(int r, int rot, float zoom, Vec2 mid, Vec2 size)
-{
-    ImColor color;
-    color.Value.x = 0.5f;
-    color.Value.y = 0.5f;
-    color.Value.z = 0.5f;
-    color.Value.w = 1.0f;
-    //Vec4 cwishDir = czMove::getWishDir(0, GS_CMD);
-
-    float offset = rot==fps_rot_left? 94 : 86;
-    float nanglediff = czMath::NormalizeToRange(getViewAngle() - offset + (90 * r), -180, 180);
-    ImGui::GetWindowDrawList()->AddLine({ mid.x + (nanglediff * zoom), mid.y }, { mid.x + (nanglediff * zoom), mid.y + size.y }, ImColor(1.0f, 1.0f, 1.0f, 1.0f), 8);
-}
-
 struct fps_zone
 {
     int fps;
@@ -86,7 +69,7 @@ struct fps_zone
 
 fps_rot_ get_rotation()
 {
-    fps_rot_ cRot = fps_rot_left;
+   static fps_rot_ cRot = fps_rot_left;
     if (GS_CMD->strafe == strafe_left)
         cRot = fps_rot_right;
     else if (GS_CMD->strafe == strafe_right)
@@ -112,18 +95,41 @@ fps_rot_ get_rotation()
     return cRot;
 }
 
+void get_rot_rect(Vec2 &TopLeft, Vec2 &BottomRight, float rotation, float start_pos, float zoom, float height, FPSWheelItem& fps)
+{
+    fps_rot_ cRot = get_rotation();
+    Vec2 mid = { ImGui::GetWindowPos().x + (ImGui::GetWindowSize().x / 2), ImGui::GetWindowPos().y };
+    float fShift = cRot == fps_rot_right ? -rot_shift : rot_shift;
+    float anglediff = normalize(getViewAngle() - fShift + rotation);
+    
+    if (cRot == fps_rot_left)
+    {
+        TopLeft = { mid.x + start_pos + (anglediff * zoom), mid.y };
+        BottomRight = { TopLeft.x + (fps.size * zoom), mid.y + height };
+    }
+    else
+    {
+        TopLeft = { mid.x - start_pos + (anglediff * zoom), mid.y };
+        BottomRight = { TopLeft.x - (fps.size * zoom), mid.y + height };
+    }
+}
+
+
 ex_czApi void czApi::draw(LPDIRECT3DDEVICE9 dev, DWORD* imgui_context)
 {
 
     if (GImGui == nullptr)
     {
         //All of the sizes added together should be equal to 90 degrees
-        FPSVec["125"] = FPSWheelItem("125", czFPSWheel::c125->Value.Vector4, 13.3f);
-        FPSVec["200"] = FPSWheelItem("200", czFPSWheel::c200->Value.Vector4, 9.4f);
+        FPSVec["125"] = FPSWheelItem("125", czFPSWheel::c125->Value.Vector4, czFPSWheel::show200->Value.Bool ? 13.3f : 22.7f);
+		if (czFPSWheel::show200->Value.Bool)
+            FPSVec["200"] = FPSWheelItem("200", czFPSWheel::c200->Value.Vector4, 9.4f);
         FPSVec["250"] = FPSWheelItem("250", czFPSWheel::c250->Value.Vector4, 20.35f);
         FPSVec["333"] = FPSWheelItem("333", czFPSWheel::c333->Value.Vector4, 46.95f);
         GImGui = (ImGuiContext*)imgui_context;
     }
+
+
     if (czFPSWheel::height == nullptr || !GS_isConnected)
         return;
     float height = czFPSWheel::height->Value.Float;
@@ -140,39 +146,38 @@ ex_czApi void czApi::draw(LPDIRECT3DDEVICE9 dev, DWORD* imgui_context)
     float zoom = czFPSWheel::zoom->Value.Float;
     float opacity = czFPSWheel::opacity->Value.Float;
     fps_rot_ cRot = get_rotation();
-    rot_shift = -4.f;// *(ImGui::GetWindowSize().x / 720);
-    for (int i = 0; i <= 4; i++)
+    rot_shift = -5.f;// *(ImGui::GetWindowSize().x / 720);
+    for (int i = 0; i < 4; i++)
     {
         int rotation = (i * 90);
         float start_pos = 0;
         for (auto& [val, fps] : FPSVec)
         {
-            float fShift = cRot == fps_rot_right ? -rot_shift : rot_shift;
-            float anglediff = normalize(getViewAngle() - fShift + rotation);
-            //Translation to the window
-            Vec2 TopLeft;
-            Vec2 BottomRight;
-            if (cRot == fps_rot_left)
-            {
-                TopLeft = { mid.x + start_pos + (anglediff * zoom), mid.y };
-                BottomRight = { TopLeft.x + (fps.size * zoom), mid.y + height };
-            }
-            else
-            {
-                TopLeft = { mid.x - start_pos + (anglediff * zoom), mid.y };
-                BottomRight = { TopLeft.x - (fps.size * zoom), mid.y + height };
-            }
+            Vec2 TopLeft, BottomRight;
+            get_rot_rect(TopLeft, BottomRight, rotation, start_pos, zoom, height, fps);
             float cMid = TopLeft.x + ((BottomRight.x - TopLeft.x) / 2);
-            if (czFPSWheel::text->Value.Bool)
-            ImGui::GetWindowDrawList()->AddText({ cMid, TopLeft.y + height }, ImColor(fps.color.x, fps.color.y, fps.color.z, opacity), fps.caption.c_str());
+
+    
             ImGui::GetWindowDrawList()->AddRectFilled(TopLeft.toImVec2(), BottomRight.toImVec2(), ImColor(fps.color.x,fps.color.y,fps.color.z, opacity), 0);
+            
+            if (val == "250") //transfer zone
+            {
+                FPSWheelItem x = FPSWheelItem("", Vec4(0.0f, 1.0f, 0.0f, 0.3f), FPSVec["250"].size / 2.25f);
+                get_rot_rect(TopLeft, BottomRight, rotation, start_pos + ((FPSVec["250"].size*zoom) / 1.8), zoom, height, x);
+				
+                if (czFPSWheel::transferzone->Value.Bool)
+                    ImGui::GetWindowDrawList()->AddRectFilled(TopLeft.toImVec2(), BottomRight.toImVec2(), czFPSWheel::ctransfer->Value.Vector4.toImColor(), 0);
+                else
+                    ImGui::GetWindowDrawList()->AddLine(TopLeft.toImVec2(), Vec2(TopLeft.x, TopLeft.y+height).toImVec2(), czFPSWheel::ctransfer->Value.Vector4.toImColor(), 6);
+            }
+			
+
+            if (czFPSWheel::text->Value.Bool)
+                ImGui::GetWindowDrawList()->AddText(nullptr, height, { cRot == fps_rot_left ? cMid - 20 : cMid, TopLeft.y }, czFPSWheel::cfps->Value.Vector4.toImColor(), fps.caption.c_str());
+
             start_pos += (fps.size*zoom);
         }
     }
-
-    for (int i = 0; i < 4; i++)
-        draw250_speedup(i, cRot, zoom, mid, { 0, height });
-
 
     ImGui::GetWindowDrawList()->AddLine({ mid.x, mid.y }, { mid.x, mid.y + height }, ImColor(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
     ImGui::End();
@@ -204,7 +209,24 @@ ex_czApi void czApi::draw(LPDIRECT3DDEVICE9 dev, DWORD* imgui_context)
         {
             FPSVec["125"].color = czFPSWheel::c125->Value.Vector4;
         }
+        ImGui::ColorEdit4("Transfer", (float*)&czFPSWheel::ctransfer->Value.Vector4, ImGuiColorEditFlags_NoInputs);
+        ImGui::ColorEdit4("Text Color", (float*)&czFPSWheel::cfps->Value.Vector4, ImGuiColorEditFlags_NoInputs);
         ImGui::Checkbox("DisplayText", &czFPSWheel::text->Value.Bool);
+        if (ImGui::Checkbox("Show 200", &czFPSWheel::show200->Value.Bool))
+        {
+            if (!czFPSWheel::show200->Value.Bool)
+            {
+                FPSVec.erase("200");
+                FPSVec["125"].size=22.7f;
+            }
+            else
+            {
+                FPSVec["125"].size= 13.3f;
+                FPSVec["200"] = FPSWheelItem("200", czFPSWheel::c200->Value.Vector4, 9.4f);
+            }
+        }
+			
+        ImGui::Checkbox("Fill transfer zone", &czFPSWheel::transferzone->Value.Bool);
         if (ImGui::GetIO().KeysDown[VK_ESCAPE])
         {
             ImGui::GetIO().KeysDown[VK_ESCAPE] = false;

@@ -12,8 +12,12 @@ namespace czFPSWheel
     czVar* c250{};
     czVar* c200{};
     czVar* c125{};
+    czVar* cfps{};
+    czVar* ctransfer{};
     czVar* opacity{};
     czVar* text{};
+    czVar* show200{};
+    czVar* transferzone{};
     dVar* var2{};
     czHook *czFPSWheelHook;
 }
@@ -56,11 +60,17 @@ namespace czApi
             czFPSWheel::c250 = czVar::add("fps_wheel_color_250", czVarType::Vector4, x, AutoSave_True); //this variable will auto save and load
             x.Vector4 = { 1.0f, 0.0f, 0.0f, 1.0f };
             czFPSWheel::c333 = czVar::add("fps_wheel_color_333", czVarType::Vector4, x, AutoSave_True); //this variable will auto save and load
-            
+            x.Vector4 = { 0.0f, 1.0f, 0.0f, 1.0f };
+            czFPSWheel::ctransfer = czVar::add("fps_wheel_color_transfer", czVarType::Vector4, x, AutoSave_True); //this variable will auto save and load
+            x.Vector4 = { 1.0f, 1.0f, 1.0f, 1.0f };
+            czFPSWheel::cfps = czVar::add("fps_wheel_color_text", czVarType::Vector4, x, AutoSave_True); //this variable will auto save and load
             x.Float = 1.0f;
             czFPSWheel::opacity = czVar::add("fps_wheel_opacity", czVarType::Float, x, AutoSave_True); //this variable will auto save and load
             x.Bool = true;
-            czFPSWheel::text = czVar::add("fps_wheel_text", czVarType::Float, x, AutoSave_True); //this variable will auto save and load
+            czFPSWheel::text = czVar::add("fps_wheel_text", czVarType::Bool, x, AutoSave_True); //this variable will auto save and load
+            czFPSWheel::show200 = czVar::add("fps_wheel_show_200", czVarType::Bool, x, AutoSave_True); //this variable will auto save and load
+            x.Bool = false;
+            czFPSWheel::transferzone = czVar::add("fps_wheel_transferzone_full", czVarType::Bool, x, AutoSave_True); //this variable will auto save and load
         }
     }
 

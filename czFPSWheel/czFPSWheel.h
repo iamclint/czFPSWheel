@@ -11,6 +11,8 @@ namespace czFPSWheel
 	extern czVar* zoom;
 	extern czVar* opacity;
 	extern czVar* text;
+	extern czVar* show200;
+	extern czVar* transferzone;
 	extern dVar* var2;
 	extern czHook *czFPSWheelHook;
 	extern czVar* width;
@@ -18,4 +20,6 @@ namespace czFPSWheel
 	extern czVar* c250;
 	extern czVar* c200;
 	extern czVar* c125;
+	extern czVar* ctransfer;
+	extern czVar* cfps;
 }
