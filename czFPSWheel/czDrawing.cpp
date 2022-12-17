@@ -146,7 +146,7 @@ ex_czApi void czApi::draw(LPDIRECT3DDEVICE9 dev, DWORD* imgui_context)
     float zoom = czFPSWheel::zoom->Value.Float;
     float opacity = czFPSWheel::opacity->Value.Float;
     fps_rot_ cRot = get_rotation();
-    rot_shift = -5.f;// *(ImGui::GetWindowSize().x / 720);
+    rot_shift = -4.f;// *(ImGui::GetWindowSize().x / 720);
     for (int i = 0; i < 4; i++)
     {
         int rotation = (i * 90);
@@ -162,8 +162,8 @@ ex_czApi void czApi::draw(LPDIRECT3DDEVICE9 dev, DWORD* imgui_context)
             
             if (val == "250") //transfer zone
             {
-                FPSWheelItem x = FPSWheelItem("", Vec4(0.0f, 1.0f, 0.0f, 0.3f), FPSVec["250"].size / 2.25f);
-                get_rot_rect(TopLeft, BottomRight, rotation, start_pos + ((FPSVec["250"].size*zoom) / 1.8), zoom, height, x);
+                FPSWheelItem x = FPSWheelItem("", Vec4(0.0f, 1.0f, 0.0f, 0.3f), FPSVec["250"].size / 2.4f);
+                get_rot_rect(TopLeft, BottomRight, rotation, start_pos + ((FPSVec["250"].size*zoom) / 1.7), zoom, height, x);
 				
                 if (czFPSWheel::transferzone->Value.Bool)
                     ImGui::GetWindowDrawList()->AddRectFilled(TopLeft.toImVec2(), BottomRight.toImVec2(), czFPSWheel::ctransfer->Value.Vector4.toImColor(), 0);
